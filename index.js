@@ -5,7 +5,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://your-frontend.vercel.app"], // Allow both local and deployed frontend
+    origin: ["https://0e5d-122-186-71-238.ngrok-free.app/"], // Allow both local and deployed frontend
     methods: "GET,POST,PUT,DELETE",
     credentials: true, // If using cookies or authentication
   })
