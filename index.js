@@ -8,7 +8,11 @@ const corsOptions = {
 app.use(require("cors")(corsOptions));
 require("dotenv").config();
 const io = new Server(process.env.PORT, {
-  cors: false,
+  cors: {
+    origin: ['http://localhost:5173', 'https://9f07-122-186-71-238.ngrok-free.app'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
 });
 
 const emailToSocketId = new Map();
