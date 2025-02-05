@@ -1,1 +1,13 @@
-
+services:
+  - name: web-rtc-server
+    type: web
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js  # Change this if your main file is different
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8000  # Set a fixed port, as Render assigns dynamic ports
+    autoDeploy: true
