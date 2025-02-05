@@ -3,7 +3,7 @@ const express = require("express");
 const app = express();
 const corsOptions = {
     credentials: true,
-    origin: ['http://localhost:8000', 'https://9f07-122-186-71-238.ngrok-free.app/'] // Whitelist the domains you want to allow
+    origin: ['http://localhost:5173', 'https://9f07-122-186-71-238.ngrok-free.app/'] // Whitelist the domains you want to allow
 };
 app.use(require("cors")(corsOptions));
 require("dotenv").config();
