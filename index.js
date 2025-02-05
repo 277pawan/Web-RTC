@@ -1,7 +1,11 @@
 const { Server } = require("socket.io");
 const express = require("express");
 const app = express();
-app.use(require("cors")());
+const corsOptions = {
+    credentials: true,
+    origin: ['http://localhost:8000', 'https://9f07-122-186-71-238.ngrok-free.app/'] // Whitelist the domains you want to allow
+};
+app.use(require("cors")(corsOptions));
 require("dotenv").config();
 const io = new Server(process.env.PORT, {
   cors: false,
