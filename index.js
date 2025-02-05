@@ -4,7 +4,7 @@ const app = express();
 app.use(require("cors")());
 require("dotenv").config();
 const io = new Server(process.env.PORT, {
-  cors: true,
+  cors: false,
 });
 
 const emailToSocketId = new Map();
