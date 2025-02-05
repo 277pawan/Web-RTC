@@ -3,7 +3,7 @@
   "builds": [
     { "src": "api/socket.js", "use": "@vercel/node" }
   ],
-  "routes": [
-    { "src": "/api/socket", "dest": "/api/socket.js" }
+  "routes": [   
+    { "src": "/(.*)", "dest": "/index.js" }
   ]
 }
