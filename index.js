@@ -9,7 +9,7 @@ app.use(require("cors")(corsOptions));
 require("dotenv").config();
 const io = new Server(process.env.PORT, {
   cors: {
-    origin: ['http://localhost:5173', ' https://dd03-122-186-71-238.ngrok-free.app'],
+    origin: ['http://localhost:5173', 'https://b9ae-122-186-71-238.ngrok-free.app/'],
     methods: ['GET', 'POST'],
     credentials: true
   }
