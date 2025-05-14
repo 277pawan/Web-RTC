@@ -5,7 +5,7 @@ const corsOptions = {
   credentials: true,
   origin: [
     "http://localhost:5173",
-    "https://c906-122-186-71-238.ngrok-free.app/",
+    "https://2c7b-122-186-71-238.ngrok-free.app/",
   ], // Whitelist the domains you want to allow
 };
 app.use(require("cors")(corsOptions));
@@ -14,7 +14,7 @@ const io = new Server(process.env.PORT, {
   cors: {
     origin: [
       "http://localhost:5173",
-      "https://c906-122-186-71-238.ngrok-free.app/",
+      "https://2c7b-122-186-71-238.ngrok-free.app/",
     ],
     methods: ["GET", "POST"],
     credentials: true,
