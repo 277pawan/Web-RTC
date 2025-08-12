@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import "./socketServer.js"; // imported socketServer file
 import allRoutes from "./routes/route.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 // Load env variables
 dotenv.config();
@@ -16,6 +17,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use("/api/v1", allRoutes);
+
+app.use(errorHandler);
 
 app.get("/", (req, res) => {
   res.send("on 3000 port we are:- ");
