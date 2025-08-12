@@ -1,13 +1,21 @@
-const { Server } = require("socket.io");
-const express = require("express");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import "./socketServer.js"; // imported socketServer file
+import allRoutes from "./routes/route.js";
+
+// Load env variables
+dotenv.config();
+
 const app = express();
+
 const corsOptions = {
   credentials: true,
-  origin: ["http://localhost:5174", `${process.env.FRONTEND_URL}`],
+  origin: ["http://localhost:5174", process.env.FRONTEND_URL],
 };
-app.use(require("cors")(corsOptions));
-require("dotenv").config();
-require("./socketServer.js");
+app.use(cors(corsOptions));
+
+app.use("/api/v1", allRoutes);
 
 app.get("/", (req, res) => {
   res.send("on 3000 port we are:- ");

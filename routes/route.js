@@ -1,3 +1,12 @@
-import e from "express";
+import express from "express";
+const router = express.Router();
 
-const app = e();
+import {
+  loginController,
+  signupController,
+} from "../controllers/authController.js";
+
+router.get("/login", loginController);
+router.get("/signup", signupController);
+
+export default router;
