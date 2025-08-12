@@ -31,7 +31,7 @@ const signupController = async (req, res, next) => {
       .status(201)
       .json({ data: user, message: "Account created successfully!" });
   } catch (error) {
-    next(error); // passes the error to the global error handler
+    next(error);
   }
 };
 export { loginController, signupController };
