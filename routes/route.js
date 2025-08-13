@@ -6,7 +6,7 @@ import {
   signupController,
 } from "../controllers/authController.js";
 
-router.get("/login", loginController);
+router.post("/login", loginController);
 router.post("/signup", signupController);
 
 export default router;

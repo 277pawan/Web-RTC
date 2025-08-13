@@ -13,16 +13,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// our models are defined here 
+// Enum Values are here ------
 
+enum UserRole {
+  user
+  admin
+}
+
+// our models are defined here 
 // ---- User Model
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String      @unique
   password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  Authtoken Authtoken[]
 }
 
+// ----- Auth Token table 
+
+model Authtoken {
+  id           Int       @id @default(autoincrement())
+  accessToken  String    @unique
+  refreshToken String?
+  tokenType    String    @default("access")
+  role         UserRole  @default(user)
+  userId       Int
+  user         User      @relation(fields: [userId], references: [id])
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
