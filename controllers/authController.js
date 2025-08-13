@@ -22,11 +22,21 @@ const loginController = async (req, res, next) => {
         email,
       },
     });
+    const loginCount = await prisma.authtoken.count({
+      where: {
+        userId: existingUser.id,
+      },
+    });
+    if (loginCount >= 5) {
+      return res.status(400).json({
+        status: "failed",
+        message: "User already logged in 5 devices",
+      });
+    }
     if (!existingUser) {
       return sendError(res, "User Not Found!", 401);
     }
     const validPassword = await bcrypt.compare(password, existingUser.password);
-    console.log(validPassword);
     if (!validPassword) {
       return sendError(res, "Incorrect Password!", 401);
     }
@@ -89,4 +99,40 @@ const signupController = async (req, res, next) => {
     next(error);
   }
 };
+
+// refreshTokenController.js
+const refreshTokenController = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    const tokenRecord = await prisma.authtoken.findUnique({
+      where: { refreshToken },
+    });
+
+    if (!tokenRecord) {
+      return sendError(res, "Invalid refresh token", 401);
+    }
+
+    const accessToken = jwt.sign(
+      { userId: tokenRecord.userId },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    // Option 1: Create new token row for multi-device
+    const newToken = await prisma.authtoken.create({
+      data: {
+        userId: tokenRecord.userId,
+        accessToken,
+        refreshToken, // could also issue new refreshToken here
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    res.json({ token: newToken.accessToken });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export { loginController, signupController };
