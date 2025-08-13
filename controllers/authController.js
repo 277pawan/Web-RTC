@@ -1,6 +1,6 @@
-import prisma from "../connection/db";
-import { registerSchema } from "../validation/createUser";
-import AppError from "../utils/appError";
+import { registerSchema } from "../validation/createUser.js";
+import prisma from "../connection/db.js";
+import { formatZodErrors } from "../utils/appError.js";
 
 const loginController = (req, res) => {
   res.send("this is login controller");
@@ -10,7 +10,10 @@ const loginController = (req, res) => {
 const signupController = async (req, res, next) => {
   const userData = registerSchema.safeParse(req.body);
   if (!userData.success) {
-    return next(new AppError("Validation failed", 400));
+    return res.status(400).send({
+      status: "failed",
+      message: formatZodErrors(userData.error),
+    });
   }
 
   try {

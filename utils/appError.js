@@ -1,10 +1,10 @@
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith("4") ? "fail" : "error";
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
+export const formatZodErrors = (zodError) => {
+  const formatted = zodError.format();
 
-export default AppError;
+  return Object.entries(formatted).reduce((acc, [key, value]) => {
+    if (key !== "_errors") {
+      acc[key] = value._errors;
+    }
+    return acc;
+  }, {});
+};
