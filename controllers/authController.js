@@ -4,6 +4,7 @@ import { formatZodErrors } from "../utils/appError.js";
 import bcrypt from "bcrypt";
 import { loginUser } from "../validation/loginUser.js";
 import jwt from "jsonwebtoken";
+import { sendError } from "../utils/sendError.js";
 
 const loginController = async (req, res, next) => {
   const userData = loginUser.safeParse(req.body);
@@ -22,11 +23,12 @@ const loginController = async (req, res, next) => {
       },
     });
     if (!existingUser) {
-      return next(new AppError("No User Found", 401));
+      return sendError(res, "User Not Found!", 401);
     }
-    const validPassword = bcrypt.compare(password, existingUser.password);
+    const validPassword = await bcrypt.compare(password, existingUser.password);
+    console.log(validPassword);
     if (!validPassword) {
-      return next(new AppError("Incorrect Password!", 401));
+      return sendError(res, "Incorrect Password!", 401);
     }
 
     const accessToken = jwt.sign(
@@ -71,7 +73,7 @@ const signupController = async (req, res, next) => {
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return next(new AppError("Email already in use", 400));
+      return sendError(res, "Email already in use!", 400);
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
