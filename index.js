@@ -25,6 +25,6 @@ app.get("/", (req, res) => {
   res.send("on 3000 port we are:- ");
 });
 
-app.listen(3000, () => {
-  console.log("listening on the port 3000");
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server is running!");
 });
