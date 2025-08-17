@@ -18,7 +18,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use("/api/v1", allRoutes);
-app.get("/", (res) => {
+
+app.get("/", (req, res) => {
   res.send("Server is UP ⚡");
 });
 
