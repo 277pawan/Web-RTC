@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import "./socketServer.js"; // imported socketServer file
 import allRoutes from "./routes/route.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { initSocket } from "./socketServer.js";
 
 // Load env variables
 dotenv.config();
@@ -21,10 +21,7 @@ app.use("/api/v1", allRoutes);
 
 app.use(errorHandler);
 
-app.get("/", (req, res) => {
-  res.send("on 3000 port we are:- ");
+const server = app.listen(process.env.PORT || 3000, () => {
+  console.log("Server is running!", process.env.PORT);
 });
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server is running!");
-});
+initSocket(server);
