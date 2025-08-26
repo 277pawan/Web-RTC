@@ -13,7 +13,7 @@ app.use(express.json());
 
 const corsOptions = {
   credentials: true,
-  origin: ["http://localhost:5174", process.env.FRONTEND_URL],
+  origin: ["http://localhost:5173", process.env.FRONTEND_URL],
 };
 app.use(cors(corsOptions));
 

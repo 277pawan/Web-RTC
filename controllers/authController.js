@@ -92,9 +92,29 @@ const signupController = async (req, res, next) => {
       data: { name, email, password: hashedPassword },
     });
 
+    const accessToken = jwt.sign(
+      { userId: user.id, role: user.role }, // payload
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1d" }, // short-lived
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }, // longer-lived
+    );
+    const tokenData = await prisma.authtoken.create({
+      data: {
+        accessToken,
+        refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+    const userData = { ...user, tokenData };
     res
       .status(201)
-      .json({ data: user, message: "Account created successfully!" });
+      .json({ data: userData, message: "Account created successfully!" });
   } catch (error) {
     next(error);
   }
