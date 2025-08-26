@@ -22,6 +22,14 @@ const loginController = async (req, res, next) => {
         email,
       },
     });
+    if (!existingUser) {
+      return sendError(res, "User Not Found!", 401);
+    }
+    const validPassword = await bcrypt.compare(password, existingUser.password);
+    if (!validPassword) {
+      return sendError(res, "Incorrect Password!", 401);
+    }
+
     const loginCount = await prisma.authtoken.count({
       where: {
         userId: existingUser.id,
@@ -32,13 +40,6 @@ const loginController = async (req, res, next) => {
         status: "failed",
         message: "User already logged in 5 devices",
       });
-    }
-    if (!existingUser) {
-      return sendError(res, "User Not Found!", 401);
-    }
-    const validPassword = await bcrypt.compare(password, existingUser.password);
-    if (!validPassword) {
-      return sendError(res, "Incorrect Password!", 401);
     }
 
     const accessToken = jwt.sign(
@@ -60,9 +61,11 @@ const loginController = async (req, res, next) => {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
+    const { password: pwd, ...userWithoutPassword } = existingUser;
+    const finalResponse = { ...userWithoutPassword, tokenData };
     return res
       .status(200)
-      .json({ data: tokenData, message: "Login Successfully!" });
+      .json({ data: finalResponse, message: "Login Successfully!" });
   } catch (error) {
     next(error);
   }
@@ -111,10 +114,12 @@ const signupController = async (req, res, next) => {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
     });
-    const userData = { ...user, tokenData };
+
+    const { password: pwd, ...userWithoutPassword } = user;
+    const finalResponse = { ...userWithoutPassword, tokenData };
     res
       .status(201)
-      .json({ data: userData, message: "Account created successfully!" });
+      .json({ data: finalResponse, message: "Account created successfully!" });
   } catch (error) {
     next(error);
   }
