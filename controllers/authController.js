@@ -154,10 +154,10 @@ const refreshTokenController = async (req, res, next) => {
       },
     });
 
-    res.json({ token: newToken.accessToken });
+    res.json({ token: newToken });
   } catch (error) {
     next(error);
   }
 };
 
-export { loginController, signupController };
+export { loginController, signupController, refreshTokenController };
