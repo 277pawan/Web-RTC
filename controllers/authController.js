@@ -128,33 +128,59 @@ const signupController = async (req, res, next) => {
 // refreshTokenController.js
 const refreshTokenController = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const { refreshToken, accessToken } = req.body;
 
-    const tokenRecord = await prisma.authtoken.findUnique({
-      where: { refreshToken },
-    });
+    if (refreshToken) {
+      const tokenRecord = await prisma.authtoken.findUnique({
+        where: { refreshToken },
+      });
 
-    if (!tokenRecord) {
-      return sendError(res, "Invalid refresh token", 401);
+      if (!tokenRecord) {
+        return sendError(res, "Invalid refresh token", 401);
+      }
+
+      const accessToken = jwt.sign(
+        { userId: tokenRecord.userId },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" },
+      );
+
+      const newRefreshToken = jwt.sign(
+        { userId: tokenRecord.userId },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "7d" }, // longer-lived
+      );
+
+      // Option 1: Create new token row for multi-device
+      const newToken = await prisma.authtoken.update({
+        where: { id: tokenRecord.id },
+        data: {
+          userId: tokenRecord.userId,
+          accessToken,
+          refreshToken: newRefreshToken, // could also issue new refreshToken here
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      });
+
+      res.status(200).json({ token: newToken });
+    } else {
+      const authData = await prisma.authtoken.findUnique({
+        where: { accessToken },
+        select: {
+          role: true,
+          userId: true,
+        },
+      });
+      const userData = await prisma.user.findUnique({
+        where: { id: authData.userId },
+      });
+      const { password: pwd, ...userWithoutPassword } = userData;
+      const finalResponse = userWithoutPassword;
+      return res.status(200).json({
+        data: finalResponse,
+        message: "User data fetched successfully",
+      });
     }
-
-    const accessToken = jwt.sign(
-      { userId: tokenRecord.userId },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1d" },
-    );
-
-    // Option 1: Create new token row for multi-device
-    const newToken = await prisma.authtoken.create({
-      data: {
-        userId: tokenRecord.userId,
-        accessToken,
-        refreshToken, // could also issue new refreshToken here
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
-
-    res.json({ token: newToken });
   } catch (error) {
     next(error);
   }

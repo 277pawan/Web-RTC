@@ -39,7 +39,7 @@ model User {
 model Authtoken {
   id           Int       @id @default(autoincrement())
   accessToken  String    @unique
-  refreshToken String?
+  refreshToken String?   @unique
   tokenType    String    @default("access")
   role         UserRole  @default(user)
   userId       Int
