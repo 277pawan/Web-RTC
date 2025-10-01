@@ -130,57 +130,93 @@ const refreshTokenController = async (req, res, next) => {
   try {
     const { refreshToken, accessToken } = req.body;
 
-    if (refreshToken) {
-      const tokenRecord = await prisma.authtoken.findUnique({
-        where: { refreshToken },
-      });
-
-      if (!tokenRecord) {
-        return sendError(res, "Invalid refresh token", 401);
-      }
-
-      const accessToken = jwt.sign(
-        { userId: tokenRecord.userId },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "1d" },
-      );
-
-      const newRefreshToken = jwt.sign(
-        { userId: tokenRecord.userId },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "7d" }, // longer-lived
-      );
-
-      // Option 1: Create new token row for multi-device
-      const newToken = await prisma.authtoken.update({
-        where: { id: tokenRecord.id },
-        data: {
-          userId: tokenRecord.userId,
-          accessToken,
-          refreshToken: newRefreshToken, // could also issue new refreshToken here
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-      });
-
-      res.status(200).json({ token: newToken });
-    } else {
-      const authData = await prisma.authtoken.findUnique({
-        where: { accessToken },
-        select: {
-          role: true,
-          userId: true,
-        },
-      });
-      const userData = await prisma.user.findUnique({
-        where: { id: authData.userId },
-      });
-      const { password: pwd, ...userWithoutPassword } = userData;
-      const finalResponse = userWithoutPassword;
-      return res.status(200).json({
-        data: finalResponse,
-        message: "User data fetched successfully",
-      });
+    if (!accessToken || !refreshToken) {
+      return sendError(res, "Access token and refresh token required", 400);
     }
+
+    let decodedAccessToken;
+    try {
+      // ✅ Try verifying access token first
+      decodedAccessToken = jwt.verify(
+        accessToken,
+        process.env.ACCESS_TOKEN_SECRET,
+      );
+
+      const userData = await prisma.user.findUnique({
+        where: { id: decodedAccessToken.userId },
+      });
+      if (!userData) return sendError(res, "User not found", 404);
+
+      const { password, ...userWithoutPassword } = userData;
+      return res.status(200).json({
+        data: userWithoutPassword,
+        message: "Access token valid, user data fetched",
+      });
+    } catch (err) {
+      // Token expired → we’ll use refreshToken flow
+      if (err.name !== "TokenExpiredError") {
+        return sendError(res, "Invalid access token", 401);
+      }
+    }
+
+    // ✅ Access token expired → check refresh token
+    const tokenRecord = await prisma.authtoken.findUnique({
+      where: { refreshToken },
+    });
+
+    if (!tokenRecord) {
+      return sendError(res, "Invalid refresh token", 401);
+    }
+
+    // Verify refresh token
+    let decodedRefreshToken;
+    try {
+      decodedRefreshToken = jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+      );
+    } catch (err) {
+      return sendError(res, "Expired or invalid refresh token", 401);
+    }
+
+    // Issue new access token
+    const newAccessToken = jwt.sign(
+      { userId: tokenRecord.userId },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1d" },
+    );
+
+    const newRefreshToken = jwt.sign(
+      { userId: tokenRecord.userId },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" },
+    );
+
+    // Update refresh token in DB (rotation strategy)
+    await prisma.authtoken.update({
+      where: { id: tokenRecord.id },
+      data: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    const userData = await prisma.user.findUnique({
+      where: { id: tokenRecord.userId },
+    });
+
+    if (!userData) return sendError(res, "User not found", 404);
+    const { password, ...userWithoutPassword } = userData;
+
+    return res.status(200).json({
+      token: {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      },
+      data: userWithoutPassword,
+      message: "New tokens issued successfully",
+    });
   } catch (error) {
     next(error);
   }
