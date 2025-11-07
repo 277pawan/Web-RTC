@@ -3,17 +3,24 @@ import { Server } from "socket.io";
 const emailToSocketId = new Map();
 const socketIdToEmail = new Map();
 const roomToUsers = new Map();
+let userInfoObject = {};
 
 // Socket IO Server configration
 export function initSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: ["http://localhost:5174", `${process.env.FRONTEND_URL}`],
+      origin: ["http://localhost:5173"],
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
 
+  function addData(room, email, id) {
+    if (!userInfoObject[room]) {
+      userInfoObject[room] = [];
+    }
+    userInfoObject[room].push({ email: email, id: id });
+  }
   io.on("connection", (socket) => {
     console.log("Socket Connected:", socket.id);
 
@@ -22,6 +29,8 @@ export function initSocket(server) {
       try {
         const { email, room } = data;
         console.log(`User ${email} (${socket.id}) joining room ${room}`);
+        addData(room, email, socket.id);
+        console.log(userInfoObject);
 
         // Store mappings
         emailToSocketId.set(email, socket.id);
@@ -39,7 +48,7 @@ export function initSocket(server) {
         socket.join(room);
 
         // Notify other users in the room
-        socket.to(room).emit("user:joined", { email, id: socket.id });
+        socket.to(room).emit("user:joined", userInfoObject[room]);
 
         // Send confirmation to the joining user
         io.to(socket.id).emit("room:join", data);
@@ -49,8 +58,11 @@ export function initSocket(server) {
           .get(room)
           .filter((id) => id !== socket.id);
 
-        console.log(`Sending roomUsers event to ${socket.id}:`, currentUsers);
-        io.to(socket.id).emit("roomUsers", currentUsers);
+        console.log(
+          `Sending roomUsers event to ${socket.id}:`,
+          userInfoObject[room],
+        );
+        io.to(socket.id).emit("roomUsers", userInfoObject[room]);
       } catch (error) {
         console.error("Error in roomjoin event:", error);
       }
